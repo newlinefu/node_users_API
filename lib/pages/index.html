@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style type="text/css">
+
+        header {
+            font-size: 45px;
+            font-weight: bold;
+            text-align: center;
+            color: brown;
+        }
+        #add_user_block > input,
+        #delete_user_block > input,
+        #change_user_block > input{
+            display: block;
+            font-size: 25px;
+            padding: 5px;
+            border-radius: 6px;
+            outline: none;
+            border: 2px solid black;
+            margin: 10px;
+        }
+        #add_user_block,
+        #delete_user_block,
+        #change_user_block {
+            margin: 0 30px 50px 30px;
+        }
+        #add_user_block > button,
+        #delete_user_block > button,
+        #change_user_block > button{
+            border-radius: 3px;
+            font-size: 25px;
+            margin: 10px;
+            padding: 5px;
+            outline: none;
+        }
+        main {
+            display: flex;
+        }
+        .control,
+        #all_users_block{
+            margin-top: 20px;
+        }
+
+        #all_users_block {
+            margin-left: 20px;
+        }
+        .user_card {
+            font-size: 25px;
+            text-align: center;
+            width: 400px;
+            border-radius: 6px;
+            background-color: bisque;
+            color: brown;
+            padding: 10px;
+            margin-bottom: 5px;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        User DataBase
+    </header>
+    <main>
+        <div class="control">
+            <div id="add_user_block">
+                <input type="text" placeholder="name" id="add_name_input">
+                <input type="text" placeholder="age" id="add_age_input">
+                <button id="add_btn">Add</button>
+            </div>
+            <div id="delete_user_block">
+                <input type="text" placeholder="ID" id="delete_id_input">
+                <button id="delete_btn">Delete</button>
+            </div>
+            <div id="change_user_block">
+                <input type="text" placeholder="ID" id="change_id_input">
+                <input type="text" placeholder="name" id="change_name_input">
+                <input type="text" placeholder="age" id="change_age_input">
+                <button id="change_btn">Change</button>
+            </div>
+        </div>
+        <div id="all_users_block">
+
+        </div>
+    </main>
+    <script>
+        const allUsersBlock = document.getElementById('all_users_block')
+        const addBtn = document.getElementById('add_btn')
+        const deleteBtn = document.getElementById('delete_btn')
+        const changeBtn = document.getElementById('change_btn')
+
+        addBtn.addEventListener(
+            'click',
+            () => {
+                const name = document.getElementById('add_name_input')
+                const age = document.getElementById('add_age_input')
+
+                if(name.value && age.value) {
+                    putUser(name.value, age.value)
+                    name.value = ''
+                    age.value = ''
+                }
+                else
+                    alert('Fill all necessary fields please')
+            }
+        )
+
+        deleteBtn.addEventListener(
+            'click',
+            () => {
+                const id = document.getElementById('delete_id_input')
+
+                if(id.value) {
+                    deleteUser(id.value)
+                    id.value = ''
+                }
+                else
+                    alert('Fill all necessary fields please')
+            }
+        )
+
+        changeBtn.addEventListener(
+            'click',
+            () => {
+                const id = document.getElementById('change_id_input')
+                const name = document.getElementById('change_name_input')
+                const age = document.getElementById('change_age_input')
+
+                if(id.value && (name.value || age.value)) {
+                    changeUser(id.value, name.value, age.value)
+                    id.value = ''
+                    name.value = ''
+                    age.value = ''
+                }
+                else
+                    alert('Fill all necessary fields please')
+            }
+        )
+        window.addEventListener(
+            "load",
+            () => getAllUsers().then(users => fillListOfUsersBlock(users))
+        )
+
+        async function getAllUsers() {
+            const data = await fetch('/users')
+            return data.json()
+        }
+
+        async function deleteUser(id) {
+            const data = await fetch(`/users/delete?id=${id}`).then(res => res.text())
+
+            if(data === 'OK')
+                getAllUsers().then(users => fillListOfUsersBlock(users))
+
+            return data
+        }
+
+        async function putUser(name, age) {
+            const data = await fetch(`/users/put`, {
+                method: 'POST',
+                body: JSON.stringify({name, age})
+            }).then(res => res.text())
+
+            if(data === 'OK')
+                getAllUsers().then(users => fillListOfUsersBlock(users))
+
+            return data
+        }
+
+        async function changeUser(id, name, age) {
+            const data = await fetch(`/users/change`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    id,
+                    user: {name, age}
+                })
+            }).then(res => res.text())
+
+            if(data === 'OK')
+                getAllUsers().then(users => fillListOfUsersBlock(users))
+
+            return data
+        }
+
+        function createListOfUsers(listOfUsers) {
+            let HTMLList = ''
+            for(let user of listOfUsers) {
+                HTMLList += `
+                    <div class="user_card">
+                        <p>ID: ${user.id}</p>
+                        <p>Name: ${user.name}</p>
+                        <p>Age: ${user.age}</p>
+                    </div>
+                `
+            }
+            return HTMLList
+        }
+
+        function fillListOfUsersBlock(users) {
+            allUsersBlock.innerHTML = createListOfUsers(users)
+        }
+    </script>
+</body>
+</html>
